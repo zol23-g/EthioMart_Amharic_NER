@@ -64,7 +64,8 @@ async def scrape_telegram_channels(min_id=None):
                 'message_id': message_id,  # Store the unique identifier
                 'sender_id': message.sender_id,
                 'message_text': message.text,
-                'channel': username
+                'channel': username,
+                'date': message.date
             })
             logger.info(f"Scraped message from {username}: {message.text}")
     return all_messages
@@ -83,7 +84,7 @@ async def scrape_images(min_id=None):
 def store_data(messages, filepath='data/raw/messages.csv'):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, mode='w', newline='', encoding='utf-8') as file:  # Specify encoding='utf-8'
-        writer = csv.DictWriter(file, fieldnames=['message_id', 'sender_id', 'message_text', 'channel'])
+        writer = csv.DictWriter(file, fieldnames=['message_id', 'sender_id', 'message_text', 'channel','date'])
         writer.writeheader()
         for message in messages:
             writer.writerow(message)
