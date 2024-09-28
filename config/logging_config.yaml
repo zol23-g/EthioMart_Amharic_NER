@@ -1,0 +1,14 @@
+version: 1
+handlers:
+  file_handler:
+    class: logging.FileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/telegram_scraper.log
+    encoding: utf-8  # Add this line to specify UTF-8 encoding
+formatters:
+  detailed:
+    format: '%(asctime)s %(name)s %(levelname)s: %(message)s'
+root:
+  level: INFO
+  handlers: [file_handler]
