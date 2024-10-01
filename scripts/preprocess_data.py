@@ -1,8 +1,6 @@
 import os
-import csv
 import re
 import pandas as pd
-from transformers import AutoTokenizer
 
 # Set up paths
 RAW_DATA_PATH = 'data/raw/messages.csv'
@@ -11,12 +9,6 @@ PROCESSED_DATA_PATH = 'data/processed/cleaned_messages.csv'
 # Ensure the processed data directory exists
 os.makedirs(os.path.dirname(PROCESSED_DATA_PATH), exist_ok=True)
 
-# Load a pre-trained tokenizer for Amharic (e.g., XLM-Roberta)
-def load_pretrained_tokenizer():
-    # You can use any multilingual tokenizer here. XLM-Roberta is an example.
-    tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
-    return tokenizer
-
 # Amharic-specific text normalization function (keeping prices)
 def normalize_amharic_text(text):
     # Check if text is a string; if not, replace with an empty string
@@ -24,33 +16,34 @@ def normalize_amharic_text(text):
         return ""
     
     # Remove unwanted characters but keep numbers (prices) intact
+    # Remove punctuation, but keep spaces and digits
     text = re.sub(r'[^\w\s\d]', '', text)  # Remove punctuation but keep digits
-    text = text.replace('\n', ' ')         # Replace newlines with spaces
+    text = text.replace('\n', ' ')  # Replace newlines with spaces
     return text
 
-# Function to remove leading underscores from tokens (e.g., "▁እንኳን" -> "እንኳን")
-def remove_underscores(tokens):
-    return [token.lstrip('▁') for token in tokens]
+# Function to check if a token is English
+def is_english_word(token):
+    # Match only tokens that contain English letters (A-Z, a-z)
+    return re.match(r'^[A-Za-z]+$', token) is not None
 
-# Tokenize using Hugging Face's pre-trained tokenizer
-def preprocess_text_hf(text, max_length=512):
-    # Normalize the text
+# Custom tokenizer function to split text into tokens by spaces and underscores, and exclude English words
+def custom_tokenizer(text):
+    # Normalize the text first
     normalized_text = normalize_amharic_text(text)
     
-    # Load the pre-trained tokenizer
-    tokenizer = load_pretrained_tokenizer()
+    # Tokenize by splitting the normalized text by spaces
+    tokens = normalized_text.split()  # Split based on whitespace
     
-    # Tokenize the text using the pre-trained tokenizer
-    tokens = tokenizer.tokenize(normalized_text)
-    
-    # Truncate tokens if they exceed the maximum sequence length
-    if len(tokens) > max_length:
-        tokens = tokens[:max_length]
-    
-    # Remove underscores from tokens
-    tokens = remove_underscores(tokens)
-    
-    return tokens
+    # Further split tokens that contain underscores and filter out English words
+    amharic_tokens = []
+    for token in tokens:
+        # Split by underscore, but also keep words intact
+        subtokens = token.split('_')  # Split by underscore
+        for subtoken in subtokens:
+            if not is_english_word(subtoken):  # Filter out English words
+                amharic_tokens.append(subtoken)
+
+    return amharic_tokens
 
 # Read raw data (messages.csv)
 def load_raw_data(filepath=RAW_DATA_PATH):
@@ -69,15 +62,15 @@ def process_and_save_data():
         channel = row['channel']
         date = row['date']  # Read the date column from the CSV
 
-        # Preprocess the message using the pre-trained tokenizer
-        tokens = preprocess_text_hf(message_text)
+        # Preprocess the message using the custom tokenizer
+        tokens = custom_tokenizer(message_text)
 
         # Store the cleaned data in a list of dictionaries
         processed_data.append({
             'sender_id': sender_id,
             'channel': channel,
             'date': date,  # Include date in the processed data
-            'cleaned_message': ' '.join(tokens).strip()  # Save tokens as a string and remove extra spaces
+            'cleaned_message': ' '.join(tokens).strip()  # Join tokens as a string and remove extra spaces
         })
 
     # Save the processed data to a CSV
