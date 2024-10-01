@@ -4,17 +4,17 @@ import pandas as pd
 
 # Set up paths
 RAW_DATA_PATH = 'data/processed/cleaned_messages.csv'
-LABELED_DATA_PATH = 'data/labeled/auto_labeled_data.conll'
+LABELED_DATA_PATH = 'data/labeled/labeled_data.conll'
 
 # Ensure the labeled data directory exists
 os.makedirs(os.path.dirname(LABELED_DATA_PATH), exist_ok=True)
 
 # Define patterns and keywords for labeling
 location_keywords = ['ቁጥር', '44', '210']  # Keywords that start locations
-location_sequences = [['መ', 'ገና', 'ኛ'], ['ሜ', 'ክሲ', 'ኮ'], ['22', 'ማ', 'ዞ', 'ሪያ'], ['ቦ', 'ሌ']]  # I-LOC sequences
+location_sequences = [['መገናኛ'], ['ሜክሲኮ'], ['22ማዞሪያ'], ['ቦሌ']]  # I-LOC sequences
 price_keywords = ['ዋጋ']  # Price indicators
-product_keywords = [['ኦ', 'ሪ', 'ጅ', 'ናል'], ['የ', 'ል', 'ጆች']]  # B-Product sequences
-product_sequences = [['ማ', 'ሊያ'], ['ቁም', 'ጣ']]  # I-Product sequences
+product_keywords = [['ኦሪጅናል']]  # B-Product sequences
+product_sequences = [['ከነቁምጣው'], ['ማሊያ']]  # I-Product sequences
 
 # Function to automatically label a message based on predefined patterns
 def label_message(tokens):
